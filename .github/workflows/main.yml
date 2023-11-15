@@ -1,0 +1,33 @@
+name: Update JSON
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+
+jobs:
+  update-json:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Update JSON
+        run: |
+          echo '{ "tarih": "'$(date +\%Y-\%m-\%d)'", "saat": "'$(date +\%H:\%M:\%S)'" }' > updated.json
+
+      - name: Commit changes
+        run: |
+          git config --global user.email "codermert@bk.ru"
+          git config --global user.name "codermert"
+          git add updated.json
+          git commit -m "🔄 Auto Veri güncellendi"
+          git push
