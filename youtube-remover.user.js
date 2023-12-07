@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Reklam Engelleme Kaldırıcı
+// @name         Reklam Engelleyici | codermert
 // @namespace    http://tampermonkey.net/
 // @version      3.0
 // @description  Reklam Engelleyici | codermert
