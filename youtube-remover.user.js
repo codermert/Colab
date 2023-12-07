@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Reklam Engelleyici | codermert
 // @namespace    http://tampermonkey.net/
-// @version      3.0
+// @version      4.0
 // @description  Reklam Engelleyici | codermert
 // @author       codermert
 // @match        https://www.youtube.com/*
