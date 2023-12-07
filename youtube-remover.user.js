@@ -5,244 +5,265 @@
 // @description  Reklam Engelleyici | codermert
 // @author       codermert
 // @match        https://www.youtube.com/*
-// @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
+// @icon         https://telegra.ph/file/085f9bd5981df003fc043.png
 // @updateURL    https://github.com/codermert/Colab/raw/main/youtube-remover.user.js
 // @downloadURL  https://github.com/codermert/Colab/raw/main/youtube-remover.user.js
 // @grant        none
-// @grant        GM_info
-// @grant        GM_setValue
-// @grant        GM_getValue
-// @grant        GM_registerMenuCommand
-// @grant        GM_addStyle
-// @grant        GM_xmlhttpRequest
-// @grant        GM_openInTab
-// @grant        GM_addElement
-// @license      MIT
+// @license MIT
 // ==/UserScript==
-
 (function() {
-    //
-    //      Ayarlar
-    //
+    `use strict`;
 
-    // Algılanamayan reklam engelleyiciyi etkinleştir
-    const reklamEngelleyici = true;
-
-    // Açılır pencere kaldırıcıyı etkinleştir
-    const acilirPencereKaldir = true;
-
-    // Konsola hata ayıklama mesajlarını etkinleştir
-    const hataAyiklama = true;
-
-    //
-    //      KOD
-    //
-
-    // Kaldırılacak alanları ve JSON yollarını belirt
-    const kaldirmakIcinAlanlar = [
-        '*.youtube-nocookie.com/*'
-    ];
-    const kaldirmakIcinJsonYollar = [
-        'playerResponse.adPlacements',
-        'playerResponse.playerAds',
-        'adPlacements',
-        'playerAds',
-        'playerConfig',
-        'auxiliaryUi.messageRenderers.enforcementMessageViewModel'
+    // Arayüz reklamı seçici
+    const cssSelectorArr = [
+        `#masthead-ad`, // Ana sayfa üst banner reklamı.
+        `ytd-rich-item-renderer.style-scope.ytd-rich-grid-row #content:has(.ytd-display-ad-renderer)`, // Ana sayfa video düzeni reklamı.
+        `.video-ads.ytp-ad-module`, // Oynatıcı alt banner reklamı.
+        `tp-yt-paper-dialog:has(yt-mealbar-promo-renderer)`, // Oynatma sayfası üye promosyon reklamı.
+        `ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"]`, // Oynatma sayfası sağ üstte önerilen reklam.
+        `#related #player-ads`, // Oynatma sayfası yorumlar sağ tarafındaki tanıtım reklamı.
+        `#related ytd-ad-slot-renderer`, // Oynatma sayfası yorumlar sağ tarafındaki video düzeni reklamı.
+        `ytd-ad-slot-renderer`, // Arama sayfası reklamı.
+        `yt-mealbar-promo-renderer`, // Oynatma sayfası üye öneri reklamı.
+        `ad-slot-renderer`, // M Oynatma sayfası üçüncü taraf öneri reklamı.
+        `ytm-companion-ad-renderer`, // M Atlanabilir video reklam bağlantı yeri
     ];
 
-    // Gözlemci yapılandırması
-    const gozlemciYapilandirmasi = {
-        childList: true,
-        subtree: true
-    };
+    window.dev = false; // Geliştirme modu
 
-    const klavyeOlayi = new KeyboardEvent("keydown", {
-        key: "k",
-        code: "KeyK",
-        keyCode: 75,
-        which: 75,
-        bubbles: true,
-        cancelable: true,
-        view: window
-    });
-
-    let fareOlayi = new MouseEvent("click", {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-    });
-
-    // Bu, videonun zaten devre dışı bırakıldığını kontrol etmek için kullanılır
-    let reklamsizOynatildi = 0;
-
-    if (hataAyiklama) console.log("Reklam Engelleme Kaldırıcı: Betik başlatıldı");
-    
-    window.__ytplayer_adblockDetected = false;
-
-    if (reklamEngelleyici) reklamEngelleyiciEkle();
-    if (acilirPencereKaldir) acilirPencereKaldirci();
-    if (acilirPencereKaldir) gozlemci.observe(document.body, gozlemciYapilandirmasi);
-
-    // Açılır pencereleri kaldır
-    function acilirPencereKaldirci() {
-        kaldirmakIcinJsonYollariniKaldir(kaldirmakIcinAlanlar, kaldirmakIcinJsonYollar);
-        setInterval(() => {
-
-            const tamEkranDugmesi = document.querySelector(".ytp-fullscreen-button");
-            const modalArkaPlan = document.querySelector("tp-yt-iron-overlay-backdrop");
-            const acilirPencere = document.querySelector(".style-scope ytd-enforcement-message-view-model");
-            const acilirPencereDugmesi = document.getElementById("dismiss-button");
-
-            const video1 = document.querySelector("#movie_player > video.html5-main-video");
-            const video2 = document.querySelector("#movie_player > .html5-video-container > video");
-
-            const bodyStili = document.body.style;
-
-            bodyStili.setProperty('overflow-y', 'auto', 'important');
-
-            if (modalArkaPlan) {
-                modalArkaPlan.removeAttribute("opened");
-                modalArkaPlan.remove();
-            }
-
-            if (acilirPencere) {
-                if (hataAyiklama) console.log("Reklam Engelleme Kaldırıcı: Açılır pencere algılandı, kaldırılıyor...");
-
-                if (acilirPencereDugmesi) acilirPencereDugmesi.click();
-                acilirPencere.remove();
-                reklamsizOynatildi = 2;
-
-                tamEkranDugmesi.dispatchEvent(fareOlayi);
-
-                setTimeout(() => {
-                    tamEkranDugmesi.dispatchEvent(fareOlayi);
-                }, 500);
-
-                if (hataAyiklama) console.log("Reklam Engelleme Kaldırıcı: Açılır pencere kaldırıldı");
-            }
-
-            // Açılır pencereyi kaldırdıktan sonra video duraklamış mı diye kontrol et
-            if (!reklamsizOynatildi > 0) return;
-
-            // Videonun Duraklatılmasını Kaldır
-            videoDuraklatmaKaldir(video1);
-            videoDuraklatmaKaldir(video2);
-
-        }, 1000);
+    /**
+     * Standart tarihi biçimlendirme
+     * @param {Date} time Zaman
+     * @param {String} format Biçim
+     * @return {String}
+     */
+    function moment(time, format = `YYYY-MM-DD HH:mm:ss`) {
+        // Yıl, ay, gün, saat, dakika, saniye al
+        let y = time.getFullYear()
+        let m = (time.getMonth() + 1).toString().padStart(2, `0`)
+        let d = time.getDate().toString().padStart(2, `0`)
+        let h = time.getHours().toString().padStart(2, `0`)
+        let min = time.getMinutes().toString().padStart(2, `0`)
+        let s = time.getSeconds().toString().padStart(2, `0`)
+        if (format === `YYYY-MM-DD`) {
+            return `${y}-${m}-${d}`
+        } else {
+            return `${y}-${m}-${d} ${h}:${min}:${s}`
+        }
     }
 
-    // Algılanamayan reklam engelleyici yöntemi
-    function reklamEngelleyiciEkle() {
-        setInterval(() => {
-            const atlamaDugmesi = document.querySelector('.videoAdUiSkipButton,.ytp-ad-skip-button');
-            const reklam = [...document.querySelectorAll('.ad-showing')][0];
-            const yanReklam = document.querySelector('ytd-action-companion-ad-renderer');
-            const ekranReklam = document.querySelector('div#root.style-scope.ytd-display-ad-renderer.yt-simple-endpoint');
-            const isiltiKutusu = document.querySelector('div#sparkles-container.style-scope.ytd-promoted-sparkles-web-renderer');
-            const anaKutu = document.querySelector('div#main-container.style-scope.ytd-promoted-video-renderer');
-            const beslemeReklam = document.querySelector('ytd-in-feed-ad-layout-renderer');
-            const mastheadReklam = document.querySelector('.ytd-video-masthead-ad-v3-renderer');
-            const sponsor = document.querySelectorAll("div#player-ads.style-scope.ytd-watch-flexy, div#panels.style-scope.ytd-watch-flexy");
-            const videoDisi = document.querySelector(".ytp-ad-skip-button-modern");
-
-            if (reklam) {
-                const video = document.querySelector('video');
-                video.playbackRate = 10;
-                video.volume = 0;
-                video.currentTime = video.duration;
-                atlamaDugmesi?.click();
-            }
-
-            yanReklam?.remove();
-            ekranReklam?.remove();
-            isiltiKutusu?.remove();
-            anaKutu?.remove();
-            beslemeReklam?.remove();
-            mastheadReklam?.remove();
-            sponsor?.forEach((element) => {
-                if (element.getAttribute("id") === "panels") {
-                    element.childNodes?.forEach((childElement) => {
-                        if (childElement.data.targetId && childElement.data.targetId !== "engagement-panel-macro-markers-description-chapters")
-                            // Bölümleri atlamak için
-                            childElement.remove();
-                    });
-                } else {
-                    element.remove();
-                }
-            });
-            videoDisi?.click();
-        }, 50)
+    /**
+     * Bilgiyi çıktıla
+     * @param {String} msg Mesaj
+     * @return {undefined}
+     */
+    function log(msg) {
+        if (!window.dev) {
+            return false;
+        }
+        console.log(`${moment(new Date())}  ${msg}`)
     }
 
-    // Videoyu Duraklatmanın Kaldırılması - Çoğu zaman çalışır
-    function videoDuraklatmaKaldir(video) {
-        if (!video) return;
-        if (video.paused) {
-            // Videonun duraklatılmasını kaldırmak için "k" tuşuna basıldıymış gibi simulasyon yap
-            document.dispatchEvent(klavyeOlayi);
-            reklamsizOynatildi = 0;
-            if (hataAyiklama) console.log("Reklam Engelleme Kaldırıcı: Video 'k' tuşu kullanılarak duraklatıldı");
-        } else if (reklamsizOynatildi > 0) reklamsizOynatildi--;
+    /**
+     * Çalışma bayrağını ayarla
+     * @param {String} name
+     * @return {undefined}
+     */
+    function setRunFlag(name) {
+        let style = document.createElement(`style`);
+        style.id = name;
+        (document.querySelector(`head`) || document.querySelector(`body`)).appendChild(style); // HTML'ye düğüm ekleyin.
     }
 
+    /**
+     * Çalışma bayrağını al
+     * @param {String} name
+     * @return {undefined|Element}
+     */
+    function getRunFlag(name) {
+        return document.getElementById(name);
+    }
 
-    const menuCommands = [
-    { label: "🏠 HomePage", url: "https://nocaptchaai.com" },
-    {
-      label: "📈 Dashboard /💰 Buy Solves /💲 Balance",
-      url: "https://dash.nocaptchaai.com",
-    },
-    {
-      label: "📄 Api Docs",
-      url: "https://docs.nocaptchaai.com",
-    },
-    { label: "❓ Discord", url: "https://discord.gg/E7FfzhZqzA" },
-    { label: "❓ Telegram", url: "https://t.me/noCaptchaAi" },
-  ];
+    /**
+     * Çalışma bayrağı ayarlanmış mı diye kontrol et
+     * @param {String} name
+     * @return {Boolean}
+     */
+    function checkRunFlag(name) {
+        if (getRunFlag(name)) {
+            return true;
+        } else {
+            setRunFlag(name)
+            return false;
+        }
+    }
 
-  // Register each menu command with GM_registerMenuCommand
-  menuCommands.forEach(({ label, url }) => {
-    GM_registerMenuCommand(label, () => {
-      if (window.top === window) {
-        GM_openInTab(url, {
-          active: true,
-          setParent: true,
+    /**
+     * Reklamı kaldırmak için kullanılan css stilini oluşturun ve HTML düğümüne ekleyin
+     * @param {String} styles Stil metni
+     * @return {undefined}
+     */
+    function generateRemoveADHTMLElement(styles) {
+        // Zaten ayarlandıysa çık
+        if (checkRunFlag(`RemoveADHTMLElement`)) {
+            log(`Sayfa reklamları kaldırma düğümü zaten oluşturuldu`);
+            return false
+        }
+
+        // Reklamı kaldırma stilini ayarla.
+        let style = document.createElement(`style`); // style öğesi oluştur.
+        (document.querySelector(`head`) || document.querySelector(`body`)).appendChild(style); // HTML'ye düğümü ekle.
+        style.appendChild(document.createTextNode(styles)); // Stil düğümünü element düğümüne ekle.
+        log(`Sayfa reklamları kaldırma düğümü başarıyla oluşturuldu`)
+    }
+
+    /**
+     * Reklam kaldırma css metnini oluşturun
+     * @param {Array} cssSelectorArr Ayarlanacak css seçici dizisi
+     * @return {String}
+     */
+    function generateRemoveADCssText(cssSelectorArr) {
+        cssSelectorArr.forEach((selector, index) => {
+            cssSelectorArr[index] = `${selector}{display:none!important}`; // Dolaşıp stil ayarla.
         });
-      }
-    });
-  });
-
-    
-    function kaldirmakIcinJsonYollariniKaldir(alanlar, jsonYollar) {
-        const mevcutAlan = window.location.hostname;
-        if (!alanlar.includes(mevcutAlan)) return;
-
-        jsonYollar.forEach(jsonYol => {
-            const yolParcalari = jsonYol.split('.');
-            let obj = window;
-            let oncekiObj = null;
-            let undefinedYapilacakParca = null;
-
-            for (const parca of yolParcalari) {
-                if (obj.hasOwnProperty(parca)) {
-                    oncekiObj = obj; // Ebeveyn nesneyi takip et.
-                    undefinedYapilacakParca = parca; // undefined yapabileceğimiz parçayı güncelle.
-                    obj = obj[parca];
-                } else {
-                    break; // Var olmayan bir parça bulduğumuzda dur.
-                }
-            }
-
-            // Undefined yapabileceğimiz geçerli bir parça belirlediysek, bunu yapın.
-            if (oncekiObj && undefinedYapilacakParca !== null) {
-                oncekiObj[undefinedYapilacakParca] = undefined;
-            }
-        });
+        return cssSelectorArr.join(` `); // Birleştir ve dizeye dönüştür.
     }
 
-    // Yeni içerik dinamik olarak yüklendiğinde reklamları gözlemle ve kaldır
-    const gozlemci = new MutationObserver(() => {
-        kaldirmakIcinJsonYollariniKaldir(kaldirmakIcinAlanlar, kaldirmakIcinJsonYollar);
-    });
+    /**
+     * Dokunma olayı
+     * @return {undefined}
+     */
+    function nativeTouch() {
+        const minNum = 375;
+        const maxNum = 750;
+        const randomNum = (Math.floor(Math.random() * (maxNum - minNum + 1)) + minNum) / 1000;
+
+        let element = this;
+        // Dokunma nesnesi oluştur
+        let touch = new Touch({
+            identifier: Date.now(),
+            target: element,
+            clientX: 12 + randomNum,
+            clientY: 34 + randomNum,
+            radiusX: 56 + randomNum,
+            radiusY: 78 + randomNum,
+            rotationAngle: 0,
+            force: 1
+        });
+
+        // Dokunma Olayı oluştur
+        let touchStartEvent = new TouchEvent("touchstart", {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            touches: [touch],
+            targetTouches: [touch],
+            changedTouches: [touch]
+        });
+
+        // touchstart olayını hedef öğeye gönder
+        element.dispatchEvent(touchStartEvent);
+
+        // Dokunma Olayı oluştur
+        let touchEndEvent = new TouchEvent("touchend", {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            touches: [],
+            targetTouches: [],
+            changedTouches: [touch]
+        });
+
+        // touchend olayını hedef öğeye gönder
+        element.dispatchEvent(touchEndEvent);
+    }
+
+    /**
+     * Reklamları atla
+     * @return {undefined}
+     */
+    function skipAd(mutationsList, observer) {
+        let video = document.querySelector(`.ad-showing video`) || document.querySelector(`video`); // Video öğesini al
+        let skipButton = document.querySelector(`.ytp-ad-skip-button`) || document.querySelector(`.ytp-ad-skip-button-modern`);
+        let shortAdMsg = document.querySelector(`.video-ads.ytp-ad-module .ytp-ad-player-overlay`);
+
+        if (skipButton) {
+            // Atlanabilir düğmeye sahip reklam.
+            log(`Toplam Süre:`);
+            log(`${video.duration}`)
+            log(`Geçen Süre:`);
+            log(`${video.currentTime}`)
+            // Reklamı atla.
+            skipButton.click(); // Bilgisayar
+            nativeTouch.call(skipButton); // Telefon
+            log(`Düğme reklamı atladı~~~~~~~~~~~~~`);
+        } else if (shortAdMsg) {
+            // Atlanabilir düğmeye sahip kısa reklam.
+            log(`Toplam Süre:`);
+            log(`${video.duration}`)
+            log(`Geçen Süre:`);
+            log(`${video.currentTime}`)
+            video.currentTime = video.duration;
+            log(`Zorla reklamı sonlandırdı~~~~~~~~~~~~~`);
+        } else {
+            log(`######Reklam Yok######`);
+        }
+    }
+
+    /**
+     * Oynatıcıdaki reklamları kaldır
+     * @return {undefined}
+     */
+    function removePlayerAD() {
+        // Zaten çalışıyorsa çık
+        if (checkRunFlag(`removePlayerAD`)) {
+            log(`Oynatıcıdaki reklam kaldırma özelliği zaten çalışıyor`);
+            return false
+        }
+        let observer; // Gözlemci
+        let timerID; // Zamanlayıcı
+
+        // Gözlemi başlat
+        function startObserve() {
+            // Reklam düğümünü gözlemle
+            const targetNode = document.querySelector(`.video-ads.ytp-ad-module`);
+            if (!targetNode) {
+                log(`İzlenecek hedef düğüm bulunuyor`);
+                return false;
+            }
+            // Videodaki reklamları gözle ve işle
+            const config = { childList: true, subtree: true }; // Hedef düğümün kendisiyle ve alt düğümlerle ilgili değişiklikleri gözle
+            observer = new MutationObserver(skipAd); // Reklamları işleyen geri çağrı fonksiyonunu ayarlayan bir gözlemci örneği oluşturun
+            observer.observe(targetNode, config); // Yukarıdaki yapılandırmayla reklam düğümünü gözlemlemeye başla
+            timerID = setInterval(skipAd, 1000); // Kaçan balık
+        }
+
+        // Döngü görevi
+        let startObserveID = setInterval(() => {
+            if (!(observer && timerID)) {
+                startObserve();
+            } else {
+                clearInterval(startObserveID);
+            }
+        }, 16);
+
+        log(`Oynatıcıdaki reklam kaldırma özelliği başarıyla çalıştırıldı`)
+    }
+
+    /**
+     * Ana fonksiyon
+     */
+    function main() {
+        generateRemoveADHTMLElement(generateRemoveADCssText(cssSelectorArr)); // Arayüzdeki reklamları kaldırın.
+        removePlayerAD(); // Oynatıcıdaki reklamları kaldırın.
+    }
+
+    if (document.readyState === `loading`) {
+        log(`YouTube Reklam Engelleme betiği çağrılacak:`);
+        document.addEventListener(`DOMContentLoaded`, main); // Bu sırada yükleme henüz tamamlanmadı
+    } else {
+        log(`YouTube Reklam Engelleme betiği hızlı çağrılacak:`);
+        main(); // Bu sırada 'DOMContentLoaded' zaten tetiklendi
+    }
+
 })();
