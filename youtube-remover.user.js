@@ -2,7 +2,7 @@
 // @name         Reklam Engelleyici | codermert
 // @namespace    http://tampermonkey.net/
 // @version      4.0
-// @description  Reklam Engelleyici | codermert
+// @description  Reklam Engelleyici
 // @author       codermert
 // @match        https://www.youtube.com/*
 // @icon         https://telegra.ph/file/085f9bd5981df003fc043.png
