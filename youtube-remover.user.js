@@ -177,6 +177,34 @@
         } else if (reklamsizOynatildi > 0) reklamsizOynatildi--;
     }
 
+
+    const menuCommands = [
+    { label: "🏠 HomePage", url: "https://nocaptchaai.com" },
+    {
+      label: "📈 Dashboard /💰 Buy Solves /💲 Balance",
+      url: "https://dash.nocaptchaai.com",
+    },
+    {
+      label: "📄 Api Docs",
+      url: "https://docs.nocaptchaai.com",
+    },
+    { label: "❓ Discord", url: "https://discord.gg/E7FfzhZqzA" },
+    { label: "❓ Telegram", url: "https://t.me/noCaptchaAi" },
+  ];
+
+  // Register each menu command with GM_registerMenuCommand
+  menuCommands.forEach(({ label, url }) => {
+    GM_registerMenuCommand(label, () => {
+      if (window.top === window) {
+        GM_openInTab(url, {
+          active: true,
+          setParent: true,
+        });
+      }
+    });
+  });
+
+    
     function kaldirmakIcinJsonYollariniKaldir(alanlar, jsonYollar) {
         const mevcutAlan = window.location.hostname;
         if (!alanlar.includes(mevcutAlan)) return;
