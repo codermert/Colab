@@ -9,6 +9,15 @@
 // @updateURL    https://github.com/codermert/Colab/raw/main/youtube-remover.user.js
 // @downloadURL  https://github.com/codermert/Colab/raw/main/youtube-remover.user.js
 // @grant        none
+// @grant        GM_info
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM_registerMenuCommand
+// @grant        GM_addStyle
+// @grant        GM_xmlhttpRequest
+// @grant        GM_openInTab
+// @grant        GM_addElement
+// @license      MIT
 // ==/UserScript==
 
 (function() {
