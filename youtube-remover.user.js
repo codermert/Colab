@@ -6,8 +6,8 @@
 // @author       codermert
 // @match        https://www.youtube.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
-// @updateURL    https://github.com/codermert/Colab/raw/main/user.js
-// @downloadURL  https://github.com/codermert/Colab/raw/main/user.js
+// @updateURL    https://github.com/codermert/Colab/raw/main/youtube-remover.user.js
+// @downloadURL  https://github.com/codermert/Colab/raw/main/youtube-remover.user.js
 // @grant        none
 // ==/UserScript==
 
